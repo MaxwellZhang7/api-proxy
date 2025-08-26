@@ -1,28 +1,24 @@
-import os
-from flask import Flask, request, jsonify
+import json
+from flask import Flask, request
 import google.generativeai as genai
 
 app = Flask(__name__)
 
-# 读取环境变量中的 API Key
-GENIE_API_KEY = os.environ.get("GENIE_API_KEY")
-genai.configure(api_key=GENIE_API_KEY)
+# 配置 Gemini 2.5 API Key
+genai.configure(api_key="AIzaSyA7UCf2pgHX8dMlqDqxbbkRNweUSmfy9B8")
 
-@app.route("/api/proxy", methods=["POST"])
+@app.route("/proxy", methods=["POST"])
 def proxy():
-    data = request.get_json()
-    prompt = data.get("prompt", "")
-    
     try:
-        response = genai.chat.completions.create(
-            model="gemini-2.5",
-            messages=[{"role": "user", "content": prompt}]
-        )
-        return jsonify({
-            "text": response.choices[0].message.content
-        })
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
+        data = request.json
+        prompt = data.get("prompt", "")
+        if not prompt:
+            return json.dumps({"error": "No prompt provided"}), 400
 
-if __name__ == "__main__":
-    app.run(debug=True)
+        response = genai.generate_text(
+            model="gemini-2.5",
+            prompt=prompt
+        )
+        return json.dumps({"text": response.text})
+    except Exception as e:
+        return json.dumps({"error": str(e)}), 500
