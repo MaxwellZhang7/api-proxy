@@ -1,7 +1,16 @@
 {
-  "functions": {
-    "api/proxy.py": {
-      "runtime": "python3.11"
+  "version": 2,
+  "builds": [
+    {
+      "src": "api/proxy.py",
+      "use": "@vercel/python"
     }
-  }
+  ],
+  "routes": [
+    {
+      "src": "/api/proxy",
+      "methods": ["POST"],
+      "dest": "api/proxy.py"
+    }
+  ]
 }
