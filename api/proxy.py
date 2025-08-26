@@ -1,24 +1,30 @@
-import json
-from flask import Flask, request
-import google.generativeai as genai
+from flask import Flask, request, jsonify
+import os
+import requests
 
 app = Flask(__name__)
 
-# 配置 Gemini 2.5 API Key
-genai.configure(api_key="AIzaSyA7UCf2pgHX8dMlqDqxbbkRNweUSmfy9B8")
+GEN_API_KEY = os.environ.get("GEN_API_KEY")  # 在 Vercel 环境变量中设置
 
-@app.route("/proxy", methods=["POST"])
+@app.route("/api/proxy", methods=["POST"])
 def proxy():
-    try:
-        data = request.json
-        prompt = data.get("prompt", "")
-        if not prompt:
-            return json.dumps({"error": "No prompt provided"}), 400
+    data = request.json
+    prompt = data.get("prompt", "")
 
-        response = genai.generate_text(
-            model="gemini-2.5",
-            prompt=prompt
-        )
-        return json.dumps({"text": response.text})
-    except Exception as e:
-        return json.dumps({"error": str(e)}), 500
+    if not prompt:
+        return jsonify({"error": "No prompt provided"}), 400
+
+    headers = {
+        "Authorization": f"Bearer {GEN_API_KEY}",
+        "Content-Type": "application/json"
+    }
+
+    payload = {
+        "model": "gemini-2.5",
+        "input": prompt
+    }
+
+    resp = requests.post("https://generativelanguage.googleapis.com/v1beta/models:generateText", 
+                         headers=headers, json=payload)
+
+    return jsonify(resp.json())
