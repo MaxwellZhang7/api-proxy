@@ -4,13 +4,17 @@ import requests
 
 app = Flask(__name__)
 
-GEN_API_KEY = os.environ.get("GEN_API_KEY")  # 在 Vercel 环境变量中设置
+GEN_API_KEY = os.environ.get("GEN_API_KEY")
+if not GEN_API_KEY:
+    raise ValueError("GEN_API_KEY environment variable is not set")
+
+MODEL_NAME = "gemini-2.5"
+API_URL = f"https://generativelanguage.googleapis.com/v1beta/models/{MODEL_NAME}:generateText"
 
 @app.route("/api/proxy", methods=["POST"])
 def proxy():
     data = request.json
     prompt = data.get("prompt", "")
-
     if not prompt:
         return jsonify({"error": "No prompt provided"}), 400
 
@@ -20,11 +24,13 @@ def proxy():
     }
 
     payload = {
-        "model": "gemini-2.5",
-        "input": prompt
+        "prompt": [{"content": prompt, "type": "text"}]
     }
 
-    resp = requests.post("https://generativelanguage.googleapis.com/v1beta/models:generateText", 
-                         headers=headers, json=payload)
-
-    return jsonify(resp.json())
+    try:
+        resp = requests.post(API_URL, headers=headers, json=payload)
+        resp.raise_for_status()
+        return jsonify(resp.json())
+    except requests.exceptions.RequestException as e:
+        return jsonify({"error": str(e), 
+                        "status_code": resp.status_code if 'resp' in locals() else None}), 500
