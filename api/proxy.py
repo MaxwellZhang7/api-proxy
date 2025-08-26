@@ -4,7 +4,7 @@ import requests
 
 app = Flask(__name__)
 
-GEN_API_KEY = os.environ.get("GEN_API_KEY")
+GEN_API_KEY = "AIzaSyA7UCf2pgHX8dMlqDqxbbkRNweUSmfy9B8"
 if not GEN_API_KEY:
     raise ValueError("GEN_API_KEY environment variable is not set")
 
